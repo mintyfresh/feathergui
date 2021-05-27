@@ -212,10 +212,10 @@ FG_Err Context::DrawTextureQuad(GLuint tex, ImageVertex* v, FG_Color color, mat4
   glBindBuffer(GL_ARRAY_BUFFER, _imagebuffer);
   _backend->LogError("glBindBuffer");
   AppendBatch(v, sizeof(ImageVertex) * 4, 4);
-  Shader::SetUniform(_backend, _imageshader, "MVP", GL_FLOAT_MAT4, (float*)transform);
+  Shader::SetUniform(_backend, _imageshader, "MVP[0]", GL_FLOAT_MAT4, (float*)transform);
   Shader::SetUniform(_backend, _imageshader, 0, GL_TEXTURE0, (float*)&tex);
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, FlushBatch());
-  _backend->LogError("glDrawArrays");
+  glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, FlushBatch(), 1);
+  _backend->LogError("glDrawArraysInstanced");
   glBindVertexArray(0);
   _backend->LogError("glBindVertexArray");
 
@@ -236,7 +236,7 @@ FG_Err Context::DrawTextGL(FG_Font* fgfont, void* textlayout, FG_Rect* area, FG_
   _backend->LogError("glBindBuffer");
 
   mat4x4 mv;
-  Shader::SetUniform(_backend, _imageshader, "MVP", GL_FLOAT_MAT4, (float*)GetRotationMatrix(mv, rotate, z, GetProjection()));
+  Shader::SetUniform(_backend, _imageshader, "MVP[0]", GL_FLOAT_MAT4, (float*)GetRotationMatrix(mv, rotate, z, GetProjection()));
 
   float dim  = (float)(1 << font->GetSizePower());
   FG_Vec pen = { area->left, area->top + ((layout->lineheight / font->lineheight) * font->GetAscender()) };
@@ -364,15 +364,15 @@ void Context::_drawStandard(GLuint shader, VAO* vao, mat4x4 proj, const FG_Rect&
   _backend->LogError("glUseProgram");
   vao->Bind();
 
-  Shader::SetUniform(_backend, shader, "MVP", GL_FLOAT_MAT4, (float*)mvp);
+  Shader::SetUniform(_backend, shader, "MVP[0]", GL_FLOAT_MAT4, (float*)mvp);
   Shader::SetUniform(_backend, shader, "DimBorderBlur", GL_FLOAT_VEC4, dimdata);
   Shader::SetUniform(_backend, shader, "Corners", GL_FLOAT_VEC4, (float*)corners.ltrb);
   Shader::SetUniform(_backend, shader, "Fill", GL_FLOAT_VEC4, fill);
   Shader::SetUniform(_backend, shader, "Outline", GL_FLOAT_VEC4, outline);
-  Shader::SetUniform(_backend, shader, "Inflate", GL_FLOAT_VEC2, inflate);
+  Shader::SetUniform(_backend, shader, "Inflate[0]", GL_FLOAT_VEC2, inflate);
 
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  _backend->LogError("glDrawArrays");
+  glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, 1);
+  _backend->LogError("glDrawArraysInstanced");
   vao->Unbind();
 }
 
@@ -422,11 +422,11 @@ FG_Err Context::DrawLines(FG_Vec* points, uint32_t count, FG_Color color, bool l
   _backend->LogError("glBindBuffer");
 
   AppendBatch(points, sizeof(FG_Vec) * count, count);
-  Shader::SetUniform(_backend, _lineshader, "MVP", GL_FLOAT_MAT4, (float*)GetProjection());
+  Shader::SetUniform(_backend, _lineshader, "MVP[0]", GL_FLOAT_MAT4, (float*)GetProjection());
   Shader::SetUniform(_backend, _lineshader, "Color", GL_FLOAT_VEC4, colors);
 
-  glDrawArrays(GL_LINE_STRIP, 0, FlushBatch());
-  _backend->LogError("glDrawArrays");
+  glDrawArraysInstanced(GL_LINE_STRIP, 0, FlushBatch(), 1);
+  _backend->LogError("glDrawArraysInstanced");
   _lineobject->Unbind();
 
   return glGetError();
